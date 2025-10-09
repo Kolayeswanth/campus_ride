@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>OLA Maps Integration</title>
+    <style>
+        #map {
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+        }
+        .placeholder {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+        .route-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            min-width: 250px;
+        }
+        .route-point {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            border-radius: 6px;
+            background: #f8f9fa;
+        }
+        .route-point.start { border-left: 4px solid #28a745; }
+        .route-point.end { border-left: 4px solid #dc3545; }
+        .route-point.via { border-left: 4px solid #fd7e14; }
+        .route-stats {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e9ecef;
+        }
+        .stat {
+            text-align: center;
+            flex: 1;
+        }
+        .stat-value {
+            font-weight: bold;
+            color: #2563eb;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div id="map">
+        <div class="placeholder">
+            <h3>🗺️ OLA Maps Integration</h3>
+            <p>Route visualization powered by OLA Maps</p>
+            <p><small>Ready for OLA Maps SDK integration</small></p>
+        </div>
+    </div>
+
+    <div class="route-info" id="routeInfo" style="display: none;">
+        <h4 style="margin-top: 0;">Route Details</h4>
+        <div id="routePoints"></div>
+        <div class="route-stats">
+            <div class="stat">
+                <div class="stat-value" id="distance">-</div>
+                <div class="stat-label">Distance</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="duration">-</div>
+                <div class="stat-label">Duration</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="points">-</div>
+                <div class="stat-label">Points</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // OLA Maps integration functions
+        let olaMap;
+        let routePolyline;
+
+        function initOlaMap(apiKey) {
+            // This would initialize the OLA Maps SDK
+            console.log('Initializing OLA Maps with API key:', apiKey);
+            
+            // Placeholder for OLA Maps initialization
+            // In production, this would use the actual OLA Maps JavaScript SDK
+            const mapElement = document.getElementById('map');
+            mapElement.innerHTML = `
+                <div class="placeholder">
+                    <h3>🗺️ OLA Maps Ready</h3>
+                    <p>Map initialized successfully</p>
+                    <p><small>SDK: ${apiKey ? 'Authenticated' : 'Demo Mode'}</small></p>
+                </div>
+            `;
+        }
+
+        function displayRoute(routeData) {
+            const { startPoint, endPoint, viaPoints, distance, duration, points } = routeData;
+            
+            // Show route info panel
+            const routeInfo = document.getElementById('routeInfo');
+            const routePoints = document.getElementById('routePoints');
+            
+            routeInfo.style.display = 'block';
+            
+            // Build route points HTML
+            let pointsHTML = '';
+            
+            if (startPoint) {
+                pointsHTML += `
+                    <div class="route-point start">
+                        <strong>Start:</strong> ${startPoint.display_name || startPoint.name}
+                    </div>
+                `;
+            }
+            
+            if (viaPoints && viaPoints.length > 0) {
+                viaPoints.forEach((point, index) => {
+                    pointsHTML += `
+                        <div class="route-point via">
+                            <strong>Via ${index + 1}:</strong> ${point.display_name || point.name}
+                        </div>
+                    `;
+                });
+            }
+            
+            if (endPoint) {
+                pointsHTML += `
+                    <div class="route-point end">
+                        <strong>End:</strong> ${endPoint.display_name || endPoint.name}
+                    </div>
+                `;
+            }
+            
+            routePoints.innerHTML = pointsHTML;
+            
+            // Update stats
+            document.getElementById('distance').textContent = distance ? `${distance.toFixed(1)} km` : '-';
+            document.getElementById('duration').textContent = duration ? `${Math.round(duration)} min` : '-';
+            document.getElementById('points').textContent = points ? `${points.length} pts` : '-';
+            
+            // In production, this would draw the route on the OLA Map
+            console.log('Route data received:', routeData);
+        }
+
+        function clearRoute() {
+            document.getElementById('routeInfo').style.display = 'none';
+            console.log('Route cleared');
+        }
+
+        // Message handler for Flutter communication
+        window.addEventListener('message', (event) => {
+            const { type, data } = event.data;
+            
+            switch (type) {
+                case 'INIT_MAP':
+                    initOlaMap(data.apiKey);
+                    break;
+                case 'DISPLAY_ROUTE':
+                    displayRoute(data);
+                    break;
+                case 'CLEAR_ROUTE':
+                    clearRoute();
+                    break;
+                default:
+                    console.log('Unknown message type:', type);
+            }
+        });
+
+        // Initialize in demo mode
+        document.addEventListener('DOMContentLoaded', () => {
+            initOlaMap();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,482 @@
+[
+  {
+    "schemaname": "public",
+    "tablename": "bus_routes",
+    "policyname": "College admins manage college routes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(is_college_admin(college_id) OR is_super_admin())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "bus_routes",
+    "policyname": "College users view college routes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((college_id = get_user_college_id()) OR is_super_admin())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "bus_routes",
+    "policyname": "admins_can_manage_college_routes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((get_user_role() = ANY (ARRAY['admin'::text, 'super_admin'::text])) AND ((get_user_role() = 'super_admin'::text) OR (college_id = get_user_college())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "bus_routes",
+    "policyname": "drivers_can_view_college_routes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((get_user_role() = 'driver'::text) AND (is_active = true) AND (college_id = get_user_college()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "bus_routes",
+    "policyname": "users_can_view_college_routes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(is_authenticated() AND (is_active = true) AND (college_id = get_user_college()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "colleges",
+    "policyname": "Allow viewing active colleges",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(is_active = true)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "colleges",
+    "policyname": "College admins view own college",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "is_college_admin(id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "colleges",
+    "policyname": "Super admins manage colleges",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "is_super_admin()",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "colleges",
+    "policyname": "admins_can_manage_own_college",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((get_user_role() = 'admin'::text) AND (id = get_user_college()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "colleges",
+    "policyname": "authenticated_users_can_view_active_colleges",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(is_authenticated() AND (is_active = true))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "colleges",
+    "policyname": "super_admins_can_manage_all_colleges",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(get_user_role() = 'super_admin'::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "driver_locations",
+    "policyname": "College admins can view college driver locations",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM (user_profiles up\n     JOIN user_profiles driver_profile ON ((driver_profile.id = driver_locations.driver_id)))\n  WHERE ((up.id = auth.uid()) AND (up.role = 'admin'::user_role) AND (up.college_id = driver_profile.college_id))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "driver_locations",
+    "policyname": "Drivers can insert own locations",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(EXISTS ( SELECT 1\n   FROM user_profiles\n  WHERE ((user_profiles.id = driver_locations.driver_id) AND (user_profiles.id = auth.uid()) AND (user_profiles.role = 'driver'::user_role))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "driver_locations",
+    "policyname": "Drivers can view own locations",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM user_profiles\n  WHERE ((user_profiles.id = driver_locations.driver_id) AND (user_profiles.id = auth.uid()) AND (user_profiles.role = 'driver'::user_role))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "driver_locations",
+    "policyname": "Students can view active driver locations",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM (user_profiles up\n     JOIN user_profiles driver_profile ON ((driver_profile.id = driver_locations.driver_id)))\n  WHERE ((up.id = auth.uid()) AND (up.role = 'passenger'::user_role) AND (up.college_id = driver_profile.college_id) AND (driver_locations.trip_id IS NOT NULL) AND (driver_locations.location_timestamp > (now() - '01:00:00'::interval)))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "driver_locations",
+    "policyname": "Super admins can view all locations",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM user_profiles\n  WHERE ((user_profiles.id = auth.uid()) AND (user_profiles.role = 'super_admin'::user_role))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "driver_trips",
+    "policyname": "College admins manage college trips",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((EXISTS ( SELECT 1\n   FROM bus_routes br\n  WHERE ((br.id = driver_trips.route_id) AND is_college_admin(br.college_id)))) OR is_super_admin())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "driver_trips",
+    "policyname": "College users view college trips",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM bus_routes br\n  WHERE ((br.id = driver_trips.route_id) AND ((br.college_id = get_user_college_id()) OR is_super_admin()))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "driver_trips",
+    "policyname": "Drivers manage own trips",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(driver_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "driver_trips",
+    "policyname": "admins_can_view_college_trips",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((get_user_role() = ANY (ARRAY['admin'::text, 'super_admin'::text])) AND (EXISTS ( SELECT 1\n   FROM bus_routes br\n  WHERE ((br.id = driver_trips.route_id) AND ((get_user_role() = 'super_admin'::text) OR (br.college_id = get_user_college()))))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "driver_trips",
+    "policyname": "drivers_can_manage_own_trips",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((get_user_role() = 'driver'::text) AND (driver_id = auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "driver_trips",
+    "policyname": "super_admins_can_manage_all_trips",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(get_user_role() = 'super_admin'::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "driver_trips",
+    "policyname": "users_can_view_active_college_trips",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(is_authenticated() AND (status = 'active'::trip_status) AND (EXISTS ( SELECT 1\n   FROM bus_routes br\n  WHERE ((br.id = driver_trips.route_id) AND (br.college_id = get_user_college())))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "location_history",
+    "policyname": "College users view college trip history",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM (driver_trips dt\n     JOIN bus_routes br ON ((dt.route_id = br.id)))\n  WHERE ((dt.id = location_history.trip_id) AND ((br.college_id = get_user_college_id()) OR is_super_admin()))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "location_history",
+    "policyname": "Drivers insert own location history",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(EXISTS ( SELECT 1\n   FROM driver_trips dt\n  WHERE ((dt.id = location_history.trip_id) AND (dt.driver_id = auth.uid()))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "location_history",
+    "policyname": "admins_can_view_college_trip_locations",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((get_user_role() = ANY (ARRAY['admin'::text, 'super_admin'::text])) AND (EXISTS ( SELECT 1\n   FROM (driver_trips dt\n     JOIN bus_routes br ON ((br.id = dt.route_id)))\n  WHERE ((dt.id = location_history.trip_id) AND ((get_user_role() = 'super_admin'::text) OR (br.college_id = get_user_college()))))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "location_history",
+    "policyname": "drivers_can_insert_own_trip_locations",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((get_user_role() = 'driver'::text) AND (EXISTS ( SELECT 1\n   FROM driver_trips dt\n  WHERE ((dt.id = location_history.trip_id) AND (dt.driver_id = auth.uid()) AND (dt.status = 'active'::trip_status)))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "location_history",
+    "policyname": "users_can_view_active_trip_locations",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(is_authenticated() AND (EXISTS ( SELECT 1\n   FROM (driver_trips dt\n     JOIN bus_routes br ON ((br.id = dt.route_id)))\n  WHERE ((dt.id = location_history.trip_id) AND (dt.status = 'active'::trip_status) AND (br.college_id = get_user_college())))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "push_tokens",
+    "policyname": "Users manage own push tokens",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "push_tokens",
+    "policyname": "admins_can_view_college_push_tokens",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((get_user_role() = ANY (ARRAY['admin'::text, 'super_admin'::text])) AND (EXISTS ( SELECT 1\n   FROM user_profiles up\n  WHERE ((up.id = push_tokens.user_id) AND ((get_user_role() = 'super_admin'::text) OR (up.college_id = get_user_college()))))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "push_tokens",
+    "policyname": "users_can_manage_own_push_tokens",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trip_analytics",
+    "policyname": "College admins manage college analytics",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((EXISTS ( SELECT 1\n   FROM bus_routes br\n  WHERE ((br.id = trip_analytics.route_id) AND is_college_admin(br.college_id)))) OR is_super_admin())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trip_analytics",
+    "policyname": "College users view college analytics",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM bus_routes br\n  WHERE ((br.id = trip_analytics.route_id) AND ((br.college_id = get_user_college_id()) OR is_super_admin()))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trip_analytics",
+    "policyname": "admins_can_manage_college_analytics",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((get_user_role() = ANY (ARRAY['admin'::text, 'super_admin'::text])) AND (EXISTS ( SELECT 1\n   FROM bus_routes br\n  WHERE ((br.id = trip_analytics.route_id) AND ((get_user_role() = 'super_admin'::text) OR (br.college_id = get_user_college()))))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trip_analytics",
+    "policyname": "drivers_can_view_own_trip_analytics",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((get_user_role() = 'driver'::text) AND (EXISTS ( SELECT 1\n   FROM driver_trips dt\n  WHERE ((dt.id = trip_analytics.trip_id) AND (dt.driver_id = auth.uid())))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trip_analytics",
+    "policyname": "system_can_insert_analytics",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "true"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_favorites",
+    "policyname": "Users manage own favorites",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_favorites",
+    "policyname": "users_can_manage_own_favorites",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_favorites",
+    "policyname": "users_can_only_favorite_college_routes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((user_id = auth.uid()) AND (EXISTS ( SELECT 1\n   FROM bus_routes br\n  WHERE ((br.id = user_favorites.route_id) AND (br.college_id = get_user_college())))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_profiles",
+    "policyname": "Allow users to insert own profile",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() = id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_profiles",
+    "policyname": "Allow users to update own profile",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(auth.uid() = id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_profiles",
+    "policyname": "Allow users to view own profile",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(auth.uid() = id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_profiles",
+    "policyname": "College admins can insert college users",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(is_college_admin(college_id) AND (role = ANY (ARRAY['driver'::user_role, 'passenger'::user_role])))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_profiles",
+    "policyname": "College admins can manage college users",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(is_college_admin(college_id) AND (role = ANY (ARRAY['driver'::user_role, 'passenger'::user_role])))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_profiles",
+    "policyname": "College admins can view college profiles",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(is_college_admin(college_id) OR (auth.uid() = id))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_profiles",
+    "policyname": "Super admins full access",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "is_super_admin()",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_profiles",
+    "policyname": "authenticated_users_all_access",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(auth.uid() IS NOT NULL)",
+    "with_check": "(auth.uid() IS NOT NULL)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_profiles",
+    "policyname": "users_college_assignment_check",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "((id = auth.uid()) AND (((role = 'super_admin'::user_role) AND (college_id IS NULL)) OR ((role <> 'super_admin'::user_role) AND (college_id IS NOT NULL)) OR (college_id = ( SELECT user_profiles_1.college_id\n   FROM user_profiles user_profiles_1\n  WHERE (user_profiles_1.id = auth.uid())))))",
+    "with_check": null
+  }
+]
