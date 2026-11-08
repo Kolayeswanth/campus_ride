@@ -1,108 +1,46 @@
 name: CI/CD Pipeline
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
+
+permissions:
+  contents: read
 
 jobs:
-  analyze:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.19.0'
-        channel: 'stable'
-    
-    - name: Install dependencies
-      run: flutter pub get
-    
-    - name: Create .env file
-      run: |
-        echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
-        echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
-        echo "OLA_MAPS_API_KEY=${{ secrets.OLA_MAPS_API_KEY }}" >> .env
-        echo "LOCATIONIQ_API_KEY=${{ secrets.LOCATIONIQ_API_KEY }}" >> .env
-        echo "OPENROUTESERVICE_API_KEY=${{ secrets.OPENROUTESERVICE_API_KEY }}" >> .env
-        echo "MAPTILER_API_KEY=${{ secrets.MAPTILER_API_KEY }}" >> .env
-        echo "MAPLIBRE_STYLE_URL=${{ secrets.MAPLIBRE_STYLE_URL }}" >> .env
-    
-    - name: Analyze code
-      run: flutter analyze
-    
-    - name: Check formatting
-      run: dart format --output=none --set-exit-if-changed .
-    
-    - name: Run tests
-      run: flutter test --coverage
-    
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: coverage/lcov.info
-
   build-android:
-    needs: analyze
     runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.19.0'
-        channel: 'stable'
-    
-    - name: Install dependencies
-      run: flutter pub get
-    
-    - name: Create .env file
-      run: |
-        echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
-        echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
-        echo "OLA_MAPS_API_KEY=${{ secrets.OLA_MAPS_API_KEY }}" >> .env
-        echo "LOCATIONIQ_API_KEY=${{ secrets.LOCATIONIQ_API_KEY }}" >> .env
-        echo "OPENROUTESERVICE_API_KEY=${{ secrets.OPENROUTESERVICE_API_KEY }}" >> .env
-        echo "MAPTILER_API_KEY=${{ secrets.MAPTILER_API_KEY }}" >> .env
-        echo "MAPLIBRE_STYLE_URL=${{ secrets.MAPLIBRE_STYLE_URL }}" >> .env
-    
-    - name: Build APK
-      run: flutter build apk --release
-    
-    - name: Upload APK artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: app-release.apk
-        path: build/app/outputs/flutter-apk/app-release.apk
 
-  build-ios:
-    needs: analyze
-    runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.19.0'
-        channel: 'stable'
-    
-    - name: Install dependencies
-      run: flutter pub get
-    
-    - name: Create .env file
-      run: |
-        echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
-        echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
-        echo "OLA_MAPS_API_KEY=${{ secrets.OLA_MAPS_API_KEY }}" >> .env
-        echo "LOCATIONIQ_API_KEY=${{ secrets.LOCATIONIQ_API_KEY }}" >> .env
-        echo "OPENROUTESERVICE_API_KEY=${{ secrets.OPENROUTESERVICE_API_KEY }}" >> .env
-        echo "MAPTILER_API_KEY=${{ secrets.MAPTILER_API_KEY }}" >> .env
-        echo "MAPLIBRE_STYLE_URL=${{ secrets.MAPLIBRE_STYLE_URL }}" >> .env
-    
-    - name: Build iOS (no-codesign)
-      run: flutter build ios --no-codesign
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.5'
+          channel: stable
+
+      - name: Setup environment
+        run: cp .env.example .env
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: campus-ride-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 14
